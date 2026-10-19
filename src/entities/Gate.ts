@@ -12,7 +12,7 @@ export class Gate extends Container {
   private readonly bars: Bar[] = [];
   private pendingPress: ((bar: Bar) => void) | null = null;
 
-  constructor(barTexture: Texture) {
+  constructor(barTexture: Texture, shadowTexture: Texture) {
     super();
     this.zIndex = Z.gate;
 
@@ -23,6 +23,7 @@ export class Gate extends Container {
         side: i < perSide ? 'left' : 'right',
         y: GATE.rowsY[i % perSide],
         texture: barTexture,
+        shadowTexture,
         onPress: (pressed) => this.handlePress(pressed),
       });
       this.bars.push(bar);

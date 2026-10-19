@@ -12,6 +12,7 @@ export interface BarOptions {
   /** y position (design space) of the bar's centre line. */
   y: number;
   texture: Texture;
+  shadowTexture: Texture;
   onPress: (bar: Bar) => void;
 }
 
@@ -36,6 +37,10 @@ export class Bar extends Container {
     this.side = options.side;
     this.direction = options.side === 'left' ? -1 : 1;
     this.closedX = options.side === 'left' ? GATE.leftX : GATE.rightX;
+
+    // The shadow is a child of the bar, so it travels with it whenever the bar
+    // slides out or slams shut. It is added first so it is drawn underneath.
+    this.addChild(this.createShadow(options.shadowTexture));
 
     // The artwork has its cap on the left; right bars are mirrored.
     this.body = new Sprite(options.texture);
@@ -98,6 +103,15 @@ export class Bar extends Container {
     this.slide?.kill();
     this.slide = gsap.to(this, { x, duration, ease });
     return finished(this.slide);
+  }
+
+  private createShadow(texture: Texture): Sprite {
+    const shadow = new Sprite(texture);
+    shadow.anchor.set(0, 0.5);
+    shadow.scale.set(-this.direction * GATE.barScale, GATE.barScale);
+    shadow.alpha = GATE.shadowAlpha;
+    shadow.position.set(GATE.shadowOffset.x, GATE.shadowOffset.y);
+    return shadow;
   }
 
   private createLabel(): Text {
