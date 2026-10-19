@@ -22,6 +22,7 @@ export class Game {
   private gate!: Gate;
   private tiger!: Tiger;
   private banner!: Banner;
+  private plate!: Plate;
 
   constructor(private readonly host: HTMLElement) {}
 
@@ -48,13 +49,14 @@ export class Game {
     this.gate = new Gate(this.assets.get('bar'), this.assets.get('barShadow'));
     this.tiger = new Tiger(this.assets.get('tiger'));
     this.banner = new Banner(this.assets.get('text'));
+    this.plate = new Plate(this.assets.get('plate'));
 
     this.scene.sortableChildren = true;
     this.scene.addChild(
       new Cage(this.assets.get('cage')),
       this.tiger,
       this.gate,
-      new Plate(this.assets.get('plate')),
+      this.plate,
       this.banner,
     );
 
@@ -65,6 +67,7 @@ export class Game {
   private async run(): Promise<void> {
     for (;;) {
       const code = this.codes.generate();
+      this.plate.meter.reset();
       console.log(`[Free the Tiger] Code: ${code.join(', ')}`);
 
       const freed = await this.playRound(code);
@@ -77,6 +80,7 @@ export class Game {
   /** Resolves with true when the cage was opened in the right order. */
   private async playRound(code: readonly number[]): Promise<boolean> {
     const slides: Promise<void>[] = [];
+    let locked = BAR_COUNT;
 
     for (const expected of code) {
       const bar = await this.gate.waitForBarPress();
@@ -86,6 +90,7 @@ export class Game {
         return false;
       }
       slides.push(bar.open());
+      this.plate.meter.setLocked(--locked);
     }
 
     await Promise.all(slides);
