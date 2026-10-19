@@ -69,7 +69,7 @@ export const TIGER = {
   /** Point of the artwork (the middle of the eyes) used as pivot for placement. */
   pivot: { x: 635, y: 572 },
   caged: { x: 618, y: 438, scale: 0.3 },
-  free: { x: 620, y: 360, scale: 0.55 },
+  free: { x: 618, y: 354, scale: 0.55 },
   stepOutDuration: 1.3,
 } as const;
 
