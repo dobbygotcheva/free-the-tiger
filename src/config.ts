@@ -36,8 +36,8 @@ export const Z = {
 export const BAR_COUNT = 6;
 
 export const CAGE = {
-  x: 646,
-  y: 372,
+  x: 647,
+  y: 376,
   scale: 0.466,
 } as const;
 
@@ -68,7 +68,7 @@ export const PLATE = {
 export const TIGER = {
   /** Point of the artwork (the middle of the eyes) used as pivot for placement. */
   pivot: { x: 635, y: 572 },
-  caged: { x: 620, y: 440, scale: 0.3 },
+  caged: { x: 618, y: 438, scale: 0.3 },
   free: { x: 620, y: 360, scale: 0.55 },
   stepOutDuration: 1.3,
 } as const;
