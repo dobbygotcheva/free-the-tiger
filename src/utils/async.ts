@@ -1,7 +1,7 @@
 import { gsap } from 'gsap';
 
 /**
- * Promise based sleep driven by GSAP's ticker (no setTimeout / setInterval).
+ * Promise based sleep driven by GSAP's ticker (no browser timers involved).
  * @param seconds how long to wait
  */
 export function delay(seconds: number): Promise<void> {
