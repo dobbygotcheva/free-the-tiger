@@ -1,27 +1,31 @@
 import { Sprite, type Texture } from 'pixi.js';
 import { gsap } from 'gsap';
-import { TIGER, Z } from '../config';
-import { finished } from '../utils/async';
+import { EASE, TIGER, Z } from '../config';
 
 /**
  * The tiger. It crouches behind the bars and, once the cage is open,
  * steps forward out of it.
  */
 export class Tiger extends Sprite {
-  private motion: gsap.core.Tween | null = null;
-
   constructor(texture: Texture) {
     super(texture);
     this.pivot.set(TIGER.pivot.x, TIGER.pivot.y);
     this.resetPose();
   }
 
+  /** Uniform scale as a single number, so GSAP can tween position and size in one go. */
+  get zoom(): number {
+    return this.scale.x;
+  }
+
+  set zoom(value: number) {
+    this.scale.set(value);
+  }
+
   /** Puts the tiger back inside the cage, behind the bars. */
   resetPose(): void {
-    this.motion?.kill();
-    this.motion = null;
     this.position.set(TIGER.caged.x, TIGER.caged.y);
-    this.scale.set(TIGER.caged.scale);
+    this.zoom = TIGER.caged.scale;
     this.zIndex = Z.tiger;
   }
 
@@ -30,38 +34,26 @@ export class Tiger extends Sprite {
     // Once it leaves the cage the tiger has to be drawn in front of the bars.
     this.zIndex = Z.tigerFree;
 
-    this.motion = gsap.to(this, {
+    await gsap.to(this, {
       x: TIGER.free.x,
       y: TIGER.free.y,
+      zoom: TIGER.free.scale,
       duration: TIGER.stepOutDuration,
-      ease: 'power2.inOut',
+      ease: EASE.tiger,
     });
-    const scaling = gsap.to(this.scale, {
-      x: TIGER.free.scale,
-      y: TIGER.free.scale,
-      duration: TIGER.stepOutDuration,
-      ease: 'power2.inOut',
-    });
-
-    await Promise.all([finished(this.motion), finished(scaling)]);
   }
 
-  /** Slides the tiger back to its cage pose. */
-  async stepBack(duration = 0.6): Promise<void> {
-    this.motion?.kill();
-    const move = gsap.to(this, {
+  /** Walks back into the cage. */
+  async stepBack(): Promise<void> {
+    // The bars close in front of the tiger, so it goes behind them right away.
+    this.zIndex = Z.tiger;
+
+    await gsap.to(this, {
       x: TIGER.caged.x,
       y: TIGER.caged.y,
-      duration,
-      ease: 'power2.inOut',
+      zoom: TIGER.caged.scale,
+      duration: TIGER.stepBackDuration,
+      ease: EASE.tiger,
     });
-    const scaling = gsap.to(this.scale, {
-      x: TIGER.caged.scale,
-      y: TIGER.caged.scale,
-      duration,
-      ease: 'power2.inOut',
-    });
-    await Promise.all([finished(move), finished(scaling)]);
-    this.resetPose();
   }
 }

@@ -1,20 +1,31 @@
-import { Container, type Texture } from 'pixi.js';
-import { gsap } from 'gsap';
+import { Container, type EventSystem, type Texture } from 'pixi.js';
 import { BAR_COUNT, GATE, Z } from '../config';
-import { finished } from '../utils/async';
 import { Bar } from './Bar';
 
 /**
  * The six bars locking the cage. Knows which bars are open, lets the game
  * `await` the player's next press and animates the group (slam / reset).
+ *
+ * The bars only react to the pointer while the game is actually waiting for a
+ * press; during every animation (slam, win, reset) the whole gate is disabled,
+ * so the pointer cursor never suggests that a click would count.
+ *
+ * PIXI only re-evaluates the cursor from a hit test, and it does so when the
+ * mouse moves or clicks. Disabling the gate alone would leave the "pointer"
+ * hand showing while the mouse rests on a bar, so the gate resets it itself.
  */
 export class Gate extends Container {
   private readonly bars: Bar[] = [];
   private pendingPress: ((bar: Bar) => void) | null = null;
 
-  constructor(barTexture: Texture, shadowTexture: Texture) {
+  constructor(
+    barTexture: Texture,
+    shadowTexture: Texture,
+    private readonly events: EventSystem,
+  ) {
     super();
     this.zIndex = Z.gate;
+    this.interactiveChildren = false;
 
     const perSide = BAR_COUNT / 2;
     for (let i = 0; i < BAR_COUNT; i++) {
@@ -35,29 +46,31 @@ export class Gate extends Container {
   waitForBarPress(): Promise<Bar> {
     return new Promise<Bar>((resolve) => {
       this.pendingPress = resolve;
+      this.interactiveChildren = true;
     });
   }
 
-  getBar(number: number): Bar {
-    const bar = this.bars[number - 1];
-    if (!bar) {
-      throw new Error(`There is no bar number ${number}`);
-    }
-    return bar;
-  }
-
-  /** Wrong bar: every open bar slams shut while the culprit wobbles. */
+  /**
+   * Wrong bar: every open bar slams shut (and rebounds) while the wrongly
+   * pressed bar rattles. The other, still closed bars stay perfectly still.
+   */
   async slamShut(wrongBar: Bar): Promise<void> {
     const slams = this.bars.filter((bar) => bar.isOpen).map((bar) => bar.slamShut());
     await Promise.all([...slams, wrongBar.wobble()]);
-    await finished(
-      gsap.fromTo(this, { x: -6 }, { x: 0, duration: 0.3, ease: 'elastic.out(1.2, 0.2)' }),
-    );
   }
 
   /** Slides every open bar back into place (scene reset after a win). */
   async closeAll(): Promise<void> {
     await Promise.all(this.bars.filter((bar) => bar.isOpen).map((bar) => bar.close()));
+  }
+
+  private disableInput(): void {
+    this.interactiveChildren = false;
+
+    // PIXI applies `rootBoundary.cursor` again right after the click handler
+    // returns, so that value has to be reset too, not just the canvas style.
+    this.events.rootBoundary.cursor = 'default';
+    this.events.setCursor('default');
   }
 
   private handlePress(bar: Bar): void {
@@ -66,6 +79,7 @@ export class Gate extends Container {
       return; // input is locked (animation in progress)
     }
     this.pendingPress = null;
+    this.disableInput();
     resolve(bar);
   }
 }

@@ -11,18 +11,21 @@ export function delay(seconds: number): Promise<void> {
 }
 
 /**
- * Turns a GSAP animation into a plain Promise<void>.
- * (Awaiting the tween directly resolves with the tween itself, which is
- * usually not what we want to pass around.)
+ * Promise that settles when an animation that *may be killed* is over.
+ *
+ * Awaiting a GSAP tween directly is fine - and preferred - when nothing can
+ * interrupt it, but a killed tween never completes and the `await` would hang
+ * forever. This helper also resolves when the animation is interrupted (killed
+ * or overwritten), so it is used for the bar slides, which get cancelled when a
+ * wrong bar slams the open ones shut.
  */
-export function finished(animation: gsap.core.Animation): Promise<void> {
+export function waitForAnimation(animation: gsap.core.Animation): Promise<void> {
   return new Promise<void>((resolve) => {
     if (animation.progress() === 1) {
       resolve();
       return;
     }
     animation.eventCallback('onComplete', resolve);
-    // A killed animation never completes, so resolve on interrupt as well.
     animation.eventCallback('onInterrupt', resolve);
   });
 }

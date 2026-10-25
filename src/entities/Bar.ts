@@ -1,7 +1,7 @@
 import { Container, Rectangle, Sprite, Text, type Texture } from 'pixi.js';
 import { gsap } from 'gsap';
-import { GATE } from '../config';
-import { finished } from '../utils/async';
+import { EASE, GATE, RENDER } from '../config';
+import { waitForAnimation } from '../utils/async';
 
 export type BarSide = 'left' | 'right';
 
@@ -66,31 +66,35 @@ export class Bar extends Container {
     return this.slideTo(
       this.closedX + this.direction * GATE.openDistance,
       GATE.openDuration,
-      'power2.out',
+      EASE.barOpen,
     );
   }
 
-  /** Throws the bar back into the cage, fast and hard. */
+  /** Throws the bar back into the cage, fast and hard, and lets it rebound. */
   async slamShut(): Promise<void> {
-    await this.slideTo(this.closedX, GATE.slamDuration, 'power4.in');
+    await this.slideTo(this.closedX, GATE.slamDuration, EASE.barSlam);
     this.lock();
+    await this.wobble();
   }
 
   /** Gently returns the bar to its closed position (used by the scene reset). */
-  async close(duration = 0.6): Promise<void> {
-    await this.slideTo(this.closedX, duration, 'power2.inOut');
+  async close(): Promise<void> {
+    await this.slideTo(this.closedX, GATE.closeDuration, EASE.barClose);
     this.lock();
   }
 
-  /** Short horizontal wobble used to point out the wrongly pressed bar. */
+  /**
+   * Short rattle of a closed bar: it springs outwards a little and settles.
+   * Used for the bars that slam shut and for the wrongly pressed bar.
+   */
   async wobble(): Promise<void> {
-    const wobble = gsap.fromTo(
+    this.slide?.kill();
+    this.slide = gsap.fromTo(
       this,
-      { x: this.closedX - 8 },
-      { x: this.closedX, duration: 0.35, ease: 'elastic.out(1.2, 0.25)' },
+      { x: this.closedX + this.direction * GATE.wobbleDistance },
+      { x: this.closedX, duration: GATE.wobbleDuration, ease: EASE.barWobble },
     );
-    this.slide = wobble;
-    await finished(wobble);
+    await waitForAnimation(this.slide);
   }
 
   private lock(): void {
@@ -102,7 +106,7 @@ export class Bar extends Container {
   private slideTo(x: number, duration: number, ease: string): Promise<void> {
     this.slide?.kill();
     this.slide = gsap.to(this, { x, duration, ease });
-    return finished(this.slide);
+    return waitForAnimation(this.slide);
   }
 
   private createShadow(texture: Texture): Sprite {
@@ -118,15 +122,15 @@ export class Bar extends Container {
     const label = new Text({
       text: String(this.barNumber),
       style: {
-        fontFamily: 'Impact, "Arial Black", sans-serif',
-        fontSize: 26,
-        fill: '#ffffff',
-        stroke: { color: '#0b2a33', width: 5, join: 'round' },
+        fontFamily: GATE.label.fontFamily,
+        fontSize: GATE.label.fontSize,
+        fill: GATE.label.color,
+        stroke: { color: GATE.label.outlineColor, width: GATE.label.outlineWidth, join: 'round' },
       },
     });
     label.anchor.set(0.5);
-    label.resolution = 2;
-    label.position.set(-this.direction * 54, 0);
+    label.resolution = RENDER.textResolution;
+    label.position.set(-this.direction * GATE.label.offset, 0);
     return label;
   }
 
