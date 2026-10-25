@@ -1,7 +1,6 @@
 import { Sprite, type Texture } from 'pixi.js';
 import { gsap } from 'gsap';
-import { BANNER, Z } from '../config';
-import { finished } from '../utils/async';
+import { BANNER, EASE, Z } from '../config';
 
 /** The "Going Wild!" text shown when the tiger gets free. */
 export class Banner extends Sprite {
@@ -13,27 +12,31 @@ export class Banner extends Sprite {
     this.visible = false;
   }
 
+  /** Uniform scale as a single number, so GSAP can tween it together with the rotation. */
+  get zoom(): number {
+    return this.scale.x;
+  }
+
+  set zoom(value: number) {
+    this.scale.set(value);
+  }
+
   async show(): Promise<void> {
     this.visible = true;
     this.alpha = 1;
-    this.scale.set(0);
-    this.rotation = -0.12;
+    this.zoom = 0;
+    this.rotation = BANNER.startRotation;
 
-    await Promise.all([
-      finished(
-        gsap.to(this.scale, {
-          x: BANNER.scale,
-          y: BANNER.scale,
-          duration: 0.6,
-          ease: 'back.out(2)',
-        }),
-      ),
-      finished(gsap.to(this, { rotation: 0, duration: 0.6, ease: 'back.out(2)' })),
-    ]);
+    await gsap.to(this, {
+      zoom: BANNER.scale,
+      rotation: 0,
+      duration: BANNER.showDuration,
+      ease: EASE.bannerShow,
+    });
   }
 
   async hide(): Promise<void> {
-    await finished(gsap.to(this, { alpha: 0, duration: 0.4, ease: 'power1.in' }));
+    await gsap.to(this, { alpha: 0, duration: BANNER.hideDuration, ease: EASE.bannerHide });
     this.visible = false;
   }
 }
