@@ -1,5 +1,5 @@
 import { Container, Sprite, type Texture } from 'pixi.js';
-import { PLATE, Z } from '../config';
+import { LAYOUTS, PLATE, Z } from '../config';
 import { LockMeter } from './LockMeter';
 
 /** The blue plate on the left side of the background. Hosts the lock meter. */
@@ -14,7 +14,8 @@ export class Plate extends Container {
     sprite.scale.set(PLATE.scale);
     this.addChild(sprite, this.meter);
 
-    this.position.set(PLATE.x, PLATE.y);
+    // ResponsiveLayout moves the plate when the screen switches layout.
+    this.position.set(LAYOUTS.landscape.plate.x, LAYOUTS.landscape.plate.y);
     this.zIndex = Z.plate;
   }
 }

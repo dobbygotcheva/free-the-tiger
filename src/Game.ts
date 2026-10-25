@@ -2,7 +2,7 @@ import { Application, Container, Sprite } from 'pixi.js';
 import { AssetLoader } from './core/AssetLoader';
 import { CodeGenerator } from './core/CodeGenerator';
 import { ResponsiveLayout } from './core/ResponsiveLayout';
-import { BANNER, BAR_COUNT } from './config';
+import { BANNER, BAR_COUNT, RENDER } from './config';
 import { Banner } from './entities/Banner';
 import { Cage } from './entities/Cage';
 import { Gate } from './entities/Gate';
@@ -29,16 +29,16 @@ export class Game {
   async start(): Promise<void> {
     await this.app.init({
       resizeTo: window,
-      background: '#0b1d1a',
+      background: RENDER.backgroundColor,
       antialias: true,
       autoDensity: true,
-      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      resolution: Math.min(window.devicePixelRatio || 1, RENDER.maxResolution),
     });
     this.host.appendChild(this.app.canvas);
 
     await this.assets.load();
     this.buildScene();
-    new ResponsiveLayout(this.app, this.backdrop, this.scene).attach();
+    new ResponsiveLayout(this.app, this.backdrop, this.scene, this.plate).attach();
 
     await this.run();
   }
