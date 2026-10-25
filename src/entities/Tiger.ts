@@ -45,6 +45,9 @@ export class Tiger extends Sprite {
 
   /** Walks back into the cage. */
   async stepBack(): Promise<void> {
+    // The bars close in front of the tiger, so it goes behind them right away.
+    this.zIndex = Z.tiger;
+
     await gsap.to(this, {
       x: TIGER.caged.x,
       y: TIGER.caged.y,
