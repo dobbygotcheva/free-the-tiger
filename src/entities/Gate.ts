@@ -1,7 +1,7 @@
 import { Container, type Texture } from 'pixi.js';
 import { gsap } from 'gsap';
 import { BAR_COUNT, GATE, Z } from '../config';
-import { finished } from '../utils/async';
+import { waitForAnimation } from '../utils/async';
 import { Bar } from './Bar';
 
 /**
@@ -50,7 +50,7 @@ export class Gate extends Container {
   async slamShut(wrongBar: Bar): Promise<void> {
     const slams = this.bars.filter((bar) => bar.isOpen).map((bar) => bar.slamShut());
     await Promise.all([...slams, wrongBar.wobble()]);
-    await finished(
+    await waitForAnimation(
       gsap.fromTo(this, { x: -6 }, { x: 0, duration: 0.3, ease: 'elastic.out(1.2, 0.2)' }),
     );
   }

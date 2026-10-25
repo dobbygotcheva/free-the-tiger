@@ -1,7 +1,7 @@
 import { Container, Rectangle, Sprite, Text, type Texture } from 'pixi.js';
 import { gsap } from 'gsap';
 import { GATE } from '../config';
-import { finished } from '../utils/async';
+import { waitForAnimation } from '../utils/async';
 
 export type BarSide = 'left' | 'right';
 
@@ -90,7 +90,7 @@ export class Bar extends Container {
       { x: this.closedX, duration: 0.35, ease: 'elastic.out(1.2, 0.25)' },
     );
     this.slide = wobble;
-    await finished(wobble);
+    await waitForAnimation(wobble);
   }
 
   private lock(): void {
@@ -102,7 +102,7 @@ export class Bar extends Container {
   private slideTo(x: number, duration: number, ease: string): Promise<void> {
     this.slide?.kill();
     this.slide = gsap.to(this, { x, duration, ease });
-    return finished(this.slide);
+    return waitForAnimation(this.slide);
   }
 
   private createShadow(texture: Texture): Sprite {
