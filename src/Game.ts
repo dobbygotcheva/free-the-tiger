@@ -46,7 +46,11 @@ export class Game {
   private buildScene(): void {
     this.backdrop.addChild(new Sprite(this.assets.get('background')));
 
-    this.gate = new Gate(this.assets.get('bar'), this.assets.get('barShadow'));
+    this.gate = new Gate(
+      this.assets.get('bar'),
+      this.assets.get('barShadow'),
+      this.app.renderer.events,
+    );
     this.tiger = new Tiger(this.assets.get('tiger'));
     this.banner = new Banner(this.assets.get('text'));
     this.plate = new Plate(this.assets.get('plate'));

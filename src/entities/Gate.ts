@@ -1,4 +1,4 @@
-import { Container, type Texture } from 'pixi.js';
+import { Container, type EventSystem, type Texture } from 'pixi.js';
 import { BAR_COUNT, GATE, Z } from '../config';
 import { Bar } from './Bar';
 
@@ -9,13 +9,20 @@ import { Bar } from './Bar';
  * The bars only react to the pointer while the game is actually waiting for a
  * press; during every animation (slam, win, reset) the whole gate is disabled,
  * so the pointer cursor never suggests that a click would count.
-
+ *
+ * PIXI only re-evaluates the cursor from a hit test, and it does so when the
+ * mouse moves or clicks. Disabling the gate alone would leave the "pointer"
+ * hand showing while the mouse rests on a bar, so the gate resets it itself.
  */
 export class Gate extends Container {
   private readonly bars: Bar[] = [];
   private pendingPress: ((bar: Bar) => void) | null = null;
 
-  constructor(barTexture: Texture, shadowTexture: Texture) {
+  constructor(
+    barTexture: Texture,
+    shadowTexture: Texture,
+    private readonly events: EventSystem,
+  ) {
     super();
     this.zIndex = Z.gate;
     this.interactiveChildren = false;
@@ -59,6 +66,11 @@ export class Gate extends Container {
 
   private disableInput(): void {
     this.interactiveChildren = false;
+
+    // PIXI applies `rootBoundary.cursor` again right after the click handler
+    // returns, so that value has to be reset too, not just the canvas style.
+    this.events.rootBoundary.cursor = 'default';
+    this.events.setCursor('default');
   }
 
   private handlePress(bar: Bar): void {
